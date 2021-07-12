@@ -68,7 +68,7 @@ class ProductController extends FrameworkBundleAdminController
     private const PRODUCT_CONTROLLER_PERMISSION = 'ADMINPRODUCTS_';
 
     /**
-     * @AdminSecurity("is_granted(['create'], request.get('_legacy_controller'))", message="You do not have permission to create this.")
+     * @AdminSecurity("is_granted('create', request.get('_legacy_controller'))", message="You do not have permission to create this.")
      *
      * @param Request $request
      *
@@ -105,7 +105,7 @@ class ProductController extends FrameworkBundleAdminController
     }
 
     /**
-     * @AdminSecurity("is_granted(['update'], request.get('_legacy_controller'))", message="You do not have permission to update this.")
+     * @AdminSecurity("is_granted('update', request.get('_legacy_controller'))", message="You do not have permission to update this.")
      *
      * @param Request $request
      * @param int $productId
@@ -240,6 +240,10 @@ class ProductController extends FrameworkBundleAdminController
             ProductConstraintException::class => [
                 ProductConstraintException::INVALID_PRICE => $this->trans(
                     'Product price is invalid',
+                    'Admin.Notifications.Error'
+                ),
+                ProductConstraintException::INVALID_REDIRECT_TARGET => $this->trans(
+                    'When redirecting towards a product you must select a target product.',
                     'Admin.Notifications.Error'
                 ),
             ],
