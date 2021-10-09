@@ -403,34 +403,45 @@ class ConfigurationCore extends ObjectModel
     /**
      * Update configuration key for global context only.
      *
-     * @param string $key
-     * @param mixed $values
-     * @param bool $html
+     * See updateValue for explanation for $html and $raw
+     *
+     * @param string $key Configuration key
+     * @param mixed $values $values is an array if the configuration is multilingual, a single string else
+     * @param bool $html Specify if html is authorized in value, note this will run purifyHTML to the value, defaults false
+     * @param bool $htmlOK do not escape html characters, defaults false
      *
      * @return bool
      */
-    public static function updateGlobalValue($key, $values, $html = false)
+    public static function updateGlobalValue($key, $values, $html = false, $htmlOK = false)
     {
-        return Configuration::updateValue($key, $values, $html, 0, 0);
+        return Configuration::updateValue($key, $values, $html, 0, 0, $htmlOK);
     }
 
     /**
      * Update configuration key and value into database (automatically insert if key does not exist).
      *
-     * Values are inserted/updated directly using SQL, because using (Configuration) ObjectModel
-     * may not insert values correctly (for example, HTML is escaped, when it should not be).
+     * Values are inserted/updated directly using SQL, using (Configuration) ObjectModel.
      *
-     * @TODO Fix saving HTML values in Configuration model
+     * If you want to save html data use $html = true. This will automatically purify the html.
+     *
+     * For passwords and other values that might contain special characters it is best to use $htmlOK = true so that no
+     * extra escaping is done. (see issue #25967)
+     *
+     * If $html and $htmlOK == false the value will be escaped for some characters and even cut at certain characters
+     * because pSQL will clean the value. use $htmlOK=true to prevent this.
+     *
+     * $html will also set $htmlOK for pSQL but it will do the html cleanup before that.
      *
      * @param string $key Configuration key
      * @param mixed $values $values is an array if the configuration is multilingual, a single string else
-     * @param bool $html Specify if html is authorized in value
-     * @param int $idShopGroup
-     * @param int $idShop
+     * @param bool $html Specify if html is authorized in value, note this will run purifyHTML to the value, defaults false
+     * @param int $idShopGroup, defaults null
+     * @param int $idShop, defaults null
+     * @param bool $htmlOK do not escape html characters, defaults false
      *
      * @return bool Update result
      */
-    public static function updateValue($key, $values, $html = false, $idShopGroup = null, $idShop = null)
+    public static function updateValue($key, $values, $html = false, $idShopGroup = null, $idShop = null, $htmlOK = false)
     {
         if (!Validate::isConfigName($key)) {
             die(Tools::displayError(Context::getContext()->getTranslator()->trans('[%s] is not a valid configuration key', [Tools::htmlentitiesUTF8($key)], 'Admin.Notifications.Error')));
@@ -451,6 +462,9 @@ class ConfigurationCore extends ObjectModel
             $values = array_map(function ($v) {
                 return Tools::purifyHTML($v);
             }, $values);
+
+            // if our value is html we also want to set $htmlOK
+            $htmlOK = true;
         }
 
         $result = true;
@@ -466,13 +480,13 @@ class ConfigurationCore extends ObjectModel
                 if (!$lang) {
                     // Update config not linked to lang
                     $result &= Db::getInstance()->update(self::$definition['table'], [
-                        'value' => pSQL($value, true),
+                        'value' => pSQL($value, $htmlOK),
                         'date_upd' => date('Y-m-d H:i:s'),
                     ], '`name` = \'' . pSQL($key) . '\'' . Configuration::sqlRestriction($idShopGroup, $idShop), 1, true);
                 } else {
                     // Update multi lang
                     $sql = 'UPDATE `' . _DB_PREFIX_ . bqSQL(self::$definition['table']) . '_lang` cl
-                            SET cl.value = \'' . pSQL($value, true) . '\',
+                            SET cl.value = \'' . pSQL($value, $htmlOK) . '\',
                                 cl.date_upd = NOW()
                             WHERE cl.id_lang = ' . (int) $lang . '
                                 AND cl.`' . bqSQL(self::$definition['primary']) . '` = (
@@ -491,7 +505,7 @@ class ConfigurationCore extends ObjectModel
                         'id_shop_group' => $idShopGroup ? (int) $idShopGroup : null,
                         'id_shop' => $idShop ? (int) $idShop : null,
                         'name' => pSQL($key),
-                        'value' => $lang ? null : pSQL($value, true),
+                        'value' => $lang ? null : pSQL($value, $htmlOK),
                         'date_add' => $now,
                         'date_upd' => $now,
                     ];
@@ -514,7 +528,7 @@ class ConfigurationCore extends ObjectModel
                     $results = Db::getInstance()->getRow($selectConfiguration);
                     $configurationExists = is_array($results) && count($results) > 0;
                     $now = date('Y-m-d H:i:s');
-                    $sanitizedValue = pSQL($value, true);
+                    $sanitizedValue = pSQL($value, $htmlOK);
 
                     if ($configurationExists) {
                         $condition = strtr(
