@@ -77,7 +77,7 @@
   },
   "homepage": "https://github.com/PrestaShop/PrestaShop/tree/develop/tests/UI#readme",
   "dependencies": {
-    "@faker-js/faker": "^7.3.0",
+    "@faker-js/faker": "^7.5.0",
     "chai": "^4.2.0",
     "chai-string": "^1.5.0",
     "csv-writer": "^1.6.0",
@@ -88,7 +88,7 @@
     "mocha": "^6.1.4",
     "mochawesome": "^6.2.2",
     "module-alias": "^2.2.2",
-    "pdfjs-dist": "^2.3.200",
+    "pdfjs-dist": "^2.16.105",
     "playwright": "^1.16.2"
   },
   "devDependencies": {
@@ -97,7 +97,7 @@
     "eslint-config-airbnb-base": "^13.2.0",
     "eslint-plugin-html": "^6.0.2",
     "eslint-plugin-import": "^2.20.2",
-    "jsdoc-to-markdown": "^7.0.1",
+    "jsdoc-to-markdown": "^7.1.1",
     "mochawesome-merge": "^4.2.0"
   }
 }
