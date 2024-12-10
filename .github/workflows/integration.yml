@@ -78,7 +78,7 @@ jobs:
         run: mysql -h127.0.0.1 -uroot -ppassword -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'password'; FLUSH PRIVILEGES;"
 
       - name: Run integration-tests
-        run: composer run-script integration-tests --timeout=0
+        run: composer run-script integration-tests --timeout=0 --stop-on-failure
         env:
           SYMFONY_DEPRECATIONS_HELPER: disabled
 
